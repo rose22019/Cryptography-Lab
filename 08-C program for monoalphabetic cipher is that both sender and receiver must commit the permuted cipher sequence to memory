@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define ALPHABET_SIZE 26
+
+void generateCipherKey(char *keyword, char *cipherKey) {
+    int keywordLength = strlen(keyword);
+    int i, j;
+
+    // Initialize cipher key with keyword
+    strcpy(cipherKey, keyword);
+
+    // Mark characters in keyword as used
+    int used[ALPHABET_SIZE] = {0};
+    for (i = 0; i < keywordLength; i++) {
+        if (isalpha(keyword[i])) {
+            used[toupper(keyword[i]) - 'A'] = 1;
+        }
+    }
+
+    // Fill remaining characters in cipher key
+    j = keywordLength;
+    for (i = 0; i < ALPHABET_SIZE; i++) {
+        if (!used[i]) {
+            cipherKey[j++] = 'A' + i;
+        }
+    }
+    cipherKey[j] = '\0';
+}
+
+char encrypt(char *cipherKey, char plainChar) {
+    if (isalpha(plainChar)) {
+        if (islower(plainChar)) {
+            return tolower(cipherKey[plainChar - 'a']);
+        } else {
+            return cipherKey[plainChar - 'A'];
+        }
+    } else {
+        return plainChar; // Non-alphabetic characters remain unchanged
+    }
+}
+
+void monoalphabeticEncrypt(char *cipherKey, char *plaintext, char *ciphertext) {
+    int i;
+    for (i = 0; plaintext[i] != '\0'; i++) {
+        ciphertext[i] = encrypt(cipherKey, plaintext[i]);
+    }
+    ciphertext[i] = '\0';
+}
+
+int main() {
+    char keyword[] = "CIPHER";
+    char plaintext[] = "hello world";
+    char cipherKey[ALPHABET_SIZE + 1];
+    char ciphertext[strlen(plaintext) + 1];
+
+    // Generate the cipher key from the keyword
+    generateCipherKey(keyword, cipherKey);
+
+    // Encrypt the plaintext using the generated cipher key
+    monoalphabeticEncrypt(cipherKey, plaintext, ciphertext);
+
+    printf("Plaintext:  %s\n", plaintext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    return 0;
+}
