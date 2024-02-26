@@ -1,0 +1,100 @@
+#include <stdio.h>
+
+// Function to calculate the determinant of a 2x2 matrix
+int determinant(int key[2][2]) {
+    return key[0][0] * key[1][1] - key[0][1] * key[1][0];
+}
+
+// Function to calculate the modular multiplicative inverse of a number modulo m
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++)
+        if ((a * x) % m == 1)
+            return x;
+    return -1; // Inverse doesn't exist
+}
+
+// Function to perform matrix multiplication
+void matrixMultiplication(int key[2][2], int message[2][20], int result[2][20]) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 20; j++) {
+            result[i][j] = 0;
+            for (int k = 0; k < 2; k++) {
+                result[i][j] += key[i][k] * message[k][j];
+            }
+            result[i][j] %= 26; // Modulo 26 operation to ensure ciphertext remains in the range [0, 25]
+        }
+    }
+}
+
+// Function to decrypt the ciphertext and recover the original plaintext
+void decrypt(int result[2][20], int key[2][2]) {
+    int det = determinant(key);
+    int detInv = modInverse(det, 26);
+
+    if (detInv == -1) {
+        printf("Error: Modular inverse of determinant doesn't exist\n");
+        return;
+    }
+
+    int invKey[2][2];
+
+    // Calculate the adjugate matrix (transpose of cofactor matrix)
+    invKey[0][0] = key[1][1];
+    invKey[1][1] = key[0][0];
+    invKey[0][1] = -key[0][1];
+    invKey[1][0] = -key[1][0];
+
+    // Apply modulo 26 to the adjugate matrix
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            invKey[i][j] = (invKey[i][j] + 26) % 26;
+        }
+    }
+
+    // Multiply by modular inverse of determinant
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            invKey[i][j] = (invKey[i][j] * detInv) % 26;
+        }
+    }
+
+    // Decrypt the ciphertext using the inverse key
+    int decrypted[2][20];
+    matrixMultiplication(invKey, result, decrypted);
+
+    // Output the plaintext
+    printf("Decrypted Message: ");
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 20; j++) {
+            printf("%c", decrypted[i][j] + 'a'); // Convert numbers back to letters
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    int key[2][2] = {{9, 4}, {5, 7}};
+    int message[2][20] = {
+        {12, 4, 4, 19, 12, 4, 0, 19, 19, 7, 4, 20, 18, 20, 0, 11, 15, 11, 0, 2},
+        {4, 19, 19, 7, 4, 20, 18, 20, 0, 11, 15, 11, 0, 2, 4, 0, 19, 19, 4, 13}
+    };
+    int result[2][20];
+
+    // Perform matrix multiplication
+    matrixMultiplication(key, message, result);
+
+    // Output the ciphertext
+    printf("Ciphertext: ");
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 20; j++) {
+            printf("%c", result[i][j] + 'a'); // Convert numbers back to letters
+        }
+    }
+    printf("\n");
+
+    // Decrypt the ciphertext and recover the original plaintext
+    decrypt(result, key);
+
+    return 0;
+}
