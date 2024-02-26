@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <string.h>
+
+void xorOperation(unsigned char *plaintext, const unsigned char *key, int block_size) {
+    for (int i = 0; i < block_size; ++i) {
+        plaintext[i] ^= key[i];
+    }
+}
+
+void encryptECB(unsigned char *plaintext, const unsigned char *key, int block_size, int num_blocks) {
+    for (int i = 0; i < num_blocks; ++i) {
+        xorOperation(plaintext + i * block_size, key, block_size);
+    }
+}
+
+void encryptCBC(unsigned char *plaintext, const unsigned char *key, unsigned char *iv, int block_size, int num_blocks) {
+    for (int i = 0; i < num_blocks; ++i) {
+        xorOperation(plaintext + i * block_size, iv, block_size);
+        xorOperation(plaintext + i * block_size, key, block_size);
+        memcpy(iv, plaintext + i * block_size, block_size); // Update IV
+    }
+}
+
+void decryptCBC(unsigned char *ciphertext, const unsigned char *key, unsigned char *iv, int block_size, int num_blocks) {
+    unsigned char prev_block[block_size];
+    for (int i = 0; i < num_blocks; ++i) {
+        memcpy(prev_block, ciphertext + i * block_size, block_size);
+        xorOperation(ciphertext + i * block_size, key, block_size);
+        xorOperation(ciphertext + i * block_size, iv, block_size);
+        memcpy(iv, prev_block, block_size); // Update IV
+    }
+}
+
+int main() {
+    unsigned char key[] = "SECRETKEY";
+    unsigned char iv[] = "INITVECT";
+    unsigned char plaintext[] = "PLAINTEX";
+    int block_size = 8;
+    int num_blocks = sizeof(plaintext) / block_size;
+
+    encryptECB(plaintext, key, block_size, num_blocks);
+    printf("Encrypted Result (ECB): ");
+    for (int i = 0; i < num_blocks * block_size; ++i) {
+        printf("%02X ", plaintext[i]);
+    }
+    printf("\n");
+
+    unsigned char encrypted_cbc[sizeof(plaintext)];
+    memcpy(encrypted_cbc, plaintext, sizeof(plaintext));
+    encryptCBC(encrypted_cbc, key, iv, block_size, num_blocks);
+    encrypted_cbc[0] ^= 0x01; // Introduce error in the first block
+    decryptCBC(encrypted_cbc, key, iv, block_size, num_blocks);
+    printf("Decrypted Result (ECB): ");
+    for (int i = 0; i < num_blocks * block_size; ++i) {
+        printf("%c", plaintext[i]);
+    }
+    printf("\n");
+
+    printf("Decrypted Result (CBC with Error): ");
+    for (int i = 0; i < num_blocks * block_size; ++i) {
+        printf("%c", encrypted_cbc[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
