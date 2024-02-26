@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+// Function to decrypt a Playfair cipher
+void decrypt(char cipher[SIZE][SIZE], char *message) {
+    int i, j;
+    char a, b;
+    int r1, r2, c1, c2;
+
+    for (i = 0; i < strlen(message); i += 2) {
+        a = message[i];
+        b = message[i + 1];
+
+        // Find positions of characters in the cipher
+        for (j = 0; j < SIZE; j++) {
+            if (strchr(cipher[j], a) != NULL) {
+                r1 = j;
+                c1 = strchr(cipher[j], a) - cipher[j];
+            }
+            if (strchr(cipher[j], b) != NULL) {
+                r2 = j;
+                c2 = strchr(cipher[j], b) - cipher[j];
+            }
+        }
+
+        // Decrypt the pair
+        if (r1 == r2) {
+            // Same row
+            c1 = (c1 - 1 + SIZE) % SIZE;
+            c2 = (c2 - 1 + SIZE) % SIZE;
+        } else if (c1 == c2) {
+            // Same column
+            r1 = (r1 - 1 + SIZE) % SIZE;
+            r2 = (r2 - 1 + SIZE) % SIZE;
+        } else {
+            // Rectangle
+            int temp = c1;
+            c1 = c2;
+            c2 = temp;
+        }
+
+        // Print decrypted characters
+        printf("%c%c", cipher[r1][c1], cipher[r2][c2]);
+    }
+}
+
+int main() {
+    char cipher[SIZE][SIZE] = {
+        {'K', 'X', 'J', 'E', 'Y'},
+        {'U', 'R', 'E', 'B', 'E'},
+        {'Z', 'W', 'E', 'H', 'E'},
+        {'W', 'R', 'Y', 'T', 'U'},
+        {'H', 'E', 'Y', 'F', 'S'}
+    };
+    
+    char message[] = "KXJEYUREBEZWEHEWRYTUHEYFSKREHEGOYFIWTTTUOLKSYCAJPOBOTEIZONTXBYBNTGONEYCUZWRGDSONSXBOUYWRHEBAAHYUSEDQ";
+
+    printf("Decrypted Message:\n");
+    decrypt(cipher, message);
+
+    return 0;
+}
